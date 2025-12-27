@@ -1,11 +1,11 @@
 class ExerciseModel {
-  int? id;
-  int programId;
-  int preparation;
-  int exerciseOrder;
-  int? repetition;
-  int? duration;
-  String name;
+  final int? id;
+  final int programId;
+  final int preparation;
+  final int exerciseOrder;
+  final int? repetition;
+  final int? duration;
+  final String name;
 
   ExerciseModel({
     required this.id,

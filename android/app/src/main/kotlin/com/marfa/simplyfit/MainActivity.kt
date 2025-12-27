@@ -1,4 +1,4 @@
-package com.example.custom_exercise
+package com.marfa.simplyfit
 
 import io.flutter.embedding.android.FlutterActivity
 

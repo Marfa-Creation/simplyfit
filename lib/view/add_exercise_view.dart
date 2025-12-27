@@ -1,38 +1,60 @@
+import 'dart:async';
 import 'package:custom_exercise/core.dart';
 import 'package:custom_exercise/model/exercise_model.dart';
-import 'package:custom_exercise/provider/edit_program_provider.dart';
+import 'package:custom_exercise/provider/exercise_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// TODO: rename to AddEdit
-class AddExerciseView extends StatefulWidget {
-  const AddExerciseView({
+class AddEditExerciseView extends StatefulWidget {
+  const AddEditExerciseView({
     super.key,
     required this.programId,
-    required this.editProgramProvider,
     required this.mode,
   });
 
   final int programId;
-  final EditProgramProvider editProgramProvider;
   final FormMode mode;
 
   @override
-  State<AddExerciseView> createState() => _AddExerciseViewState();
+  State<AddEditExerciseView> createState() => _AddEditExerciseViewState();
 }
 
-class _AddExerciseViewState extends State<AddExerciseView> {
+class _AddEditExerciseViewState extends State<AddEditExerciseView> {
   final exerciseNameController = TextEditingController();
   final metricInputController = TextEditingController();
   final preparationController = TextEditingController.fromValue(
     TextEditingValue(text: "0"),
   );
   ExerciseMetric selectedMetric = ExerciseMetric.repetition;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
+    metricInputController.addListener(() {
+      String text = metricInputController.text;
+
+      if (text.length > 1 && text.startsWith('0')) {
+        metricInputController.text = text.replaceFirst(RegExp(r'^0+'), '');
+        metricInputController.selection = TextSelection.fromPosition(
+          TextPosition(offset: metricInputController.text.length),
+        );
+      }
+    });
+
+    preparationController.addListener(() {
+      String text = preparationController.text;
+
+      if (text.length > 1 && text.startsWith('0')) {
+        preparationController.text = text.replaceFirst(RegExp(r'^0+'), '');
+        preparationController.selection = TextSelection.fromPosition(
+          TextPosition(offset: preparationController.text.length),
+        );
+      }
+    });
+
     final mode = widget.mode;
+
     if (mode is FormModeEdit) {
       final exercise = mode.selectedExercise;
       exerciseNameController.text = exercise.name;
@@ -61,122 +83,173 @@ class _AddExerciseViewState extends State<AddExerciseView> {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          TextButton(
-            onPressed: () {
-              // final provider = context.read<EditProgramProvider>();
-              // widget.editProgramProvider
+          Consumer(
+            builder: (context, ref, child) {
+              return TextButton(
+                onPressed: () async {
 
-              switch (widget.mode) {
-                case FormModeAdd _:
-                  {
-                    context.read<EditProgramProvider>().addExercise(
-                      ExerciseModel(
-                        id: null,
-                        programId: widget.programId,
-                        preparation: int.parse(preparationController.text),
-                        exerciseOrder:
-                            widget.editProgramProvider.exercises.length,
-                        name: exerciseNameController.text,
-                        duration: selectedMetric == ExerciseMetric.duration
-                            ? int.parse(metricInputController.text)
-                            : null,
-                        repetition: selectedMetric == ExerciseMetric.repetition
-                            ? int.parse(metricInputController.text)
-                            : null,
-                      ),
-                    );
-                  }
-                case FormModeEdit editMode:
-                  {
-                    context.read<EditProgramProvider>().editExercise(
-                      editMode.selectedExercise.id!,
-                      ExerciseModel(
-                        id: editMode.selectedExercise.id!,
-                        programId: widget.programId,
-                        preparation: int.parse(preparationController.text),
-                        exerciseOrder:
-                            widget.editProgramProvider.exercises.length,
-                        name: exerciseNameController.text,
-                        duration: selectedMetric == ExerciseMetric.duration
-                            ? int.parse(metricInputController.text)
-                            : null,
-                        repetition: selectedMetric == ExerciseMetric.repetition
-                            ? int.parse(metricInputController.text)
-                            : null,
-                      ),
-                    );
-                  }
-              }
+                  if (!_formKey.currentState!.validate()) return;
 
-              Navigator.pop(context);
+                  switch (widget.mode) {
+                    case FormModeAdd _:
+                      {
+                        ref
+                            .read(exerciseProvider(widget.programId).notifier)
+                            .addExercise(
+                              ExerciseModel(
+                                id: null,
+                                programId: widget.programId,
+                                preparation: int.parse(
+                                  preparationController.text,
+                                ),
+                                exerciseOrder:
+                                    (await ref.read<
+                                          FutureOr<List<ExerciseModel>>
+                                        >(
+                                          exerciseProvider(
+                                            widget.programId,
+                                          ).future,
+                                        ))
+                                        .length,
+                                name: exerciseNameController.text,
+                                duration:
+                                    selectedMetric == ExerciseMetric.duration
+                                    ? int.parse(metricInputController.text)
+                                    : null,
+                                repetition:
+                                    selectedMetric == ExerciseMetric.repetition
+                                    ? int.parse(metricInputController.text)
+                                    : null,
+                              ),
+                            );
+                      }
+                    case FormModeEdit editMode:
+                      {
+                        ref
+                            .read(exerciseProvider(widget.programId).notifier)
+                            .editExercise(
+                              editMode.selectedExercise.id!,
+                              ExerciseModel(
+                                id: editMode.selectedExercise.id!,
+                                programId: widget.programId,
+                                preparation: int.parse(
+                                  preparationController.text,
+                                ),
+                                exerciseOrder:
+                                    (await ref.read<
+                                          FutureOr<List<ExerciseModel>>
+                                        >(
+                                          exerciseProvider(
+                                            widget.programId,
+                                          ).future,
+                                        ))
+                                        .length,
+                                name: exerciseNameController.text,
+                                duration:
+                                    selectedMetric == ExerciseMetric.duration
+                                    ? int.parse(metricInputController.text)
+                                    : null,
+                                repetition:
+                                    selectedMetric == ExerciseMetric.repetition
+                                    ? int.parse(metricInputController.text)
+                                    : null,
+                              ),
+                            );
+                      }
+                  }
+
+                  if(context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: Text(switch (widget.mode) {
+                  FormModeAdd _ => "Add",
+                  FormModeEdit _ => "Edit",
+                }),
+              );
             },
-            child: Text(switch (widget.mode) {
-              FormModeAdd _ => "Add",
-              FormModeEdit _ => "Edit",
-            }),
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(10.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 11,
-          children: [
-            TextField(
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: "Name",
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "This field cannot be empty";
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: "Name",
+                ),
+                controller: exerciseNameController,
               ),
-              controller: exerciseNameController,
-            ),
-            Row(
-              spacing: 6,
-              children: [
-                Expanded(
-                  flex: 11,
-                  child: TextField(
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      // labelText: "Preparation Time (secs)",
+              SizedBox(height: 11),
+              Row(
+                crossAxisAlignment: .start,
+                spacing: 6,
+                children: [
+                  Expanded(
+                    flex: 11,
+                    child: TextFormField(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "This field cannot be empty";
+                        }
+                        if (int.parse(value) <= 0) {
+                          return "The value must be greater than 0";
+                        }
+                        return null;
+                      },
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        errorMaxLines: 2,
+                        border: OutlineInputBorder(),
+                      ),
+                      controller: metricInputController,
                     ),
-                    controller: metricInputController,
                   ),
-                ),
-                // Expanded(
-                // flex: 10,
-                // child:
-                DropdownMenu(
-                  initialSelection: selectedMetric,
-                  onSelected: (metric) => selectedMetric = metric!,
-                  dropdownMenuEntries: [
-                    DropdownMenuEntry(
-                      label: "reps",
-                      value: ExerciseMetric.repetition,
-                    ),
-                    DropdownMenuEntry(
-                      label: "secs",
-                      value: ExerciseMetric.duration,
-                    ),
-                  ],
-                ),
-                // ),
-              ],
-            ),
-            TextField(
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: "Preparation Time (secs)",
+                  DropdownMenu(
+                    initialSelection: selectedMetric,
+                    onSelected: (metric) => selectedMetric = metric!,
+                    dropdownMenuEntries: [
+                      DropdownMenuEntry(
+                        label: "reps",
+                        value: ExerciseMetric.repetition,
+                      ),
+                      DropdownMenuEntry(
+                        label: "secs",
+                        value: ExerciseMetric.duration,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              controller: preparationController,
-            ),
-          ],
+              SizedBox(height: 11),
+              TextFormField(
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "This field cannot be empty";
+                  }
+                  return null;
+                },
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: "Preparation Time (secs)",
+                ),
+                controller: preparationController,
+              ),
+            ],
+          ),
         ),
       ),
     );
