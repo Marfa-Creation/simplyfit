@@ -1,3 +1,4 @@
+import 'package:custom_exercise/core.dart';
 import 'package:custom_exercise/model/program_run_model.dart';
 import 'package:custom_exercise/provider/program_run_provider.dart';
 import 'package:custom_exercise/provider/selected_program_provider.dart';
@@ -145,11 +146,18 @@ class _ProgramRunViewState extends ConsumerState<ProgramRunView> {
                                         mainAxisAlignment: .center,
                                         crossAxisAlignment: .center,
                                         children: [
+                                          if (data.currentStep.stepType ==
+                                              StepType.repetition)
+                                            Icon(
+                                              size: 35,
+                                              Icons.close,
+                                              color: Color(0xff24283b),
+                                            ),
                                           Text(
                                             style: TextStyle(
                                               fontSize: 40,
                                               fontWeight: FontWeight.w600,
-                                              color: Color(0xfff7f7f7),
+                                              color: Color(0xff24283b),
                                             ),
                                             data.currentStep.stepType ==
                                                     StepType.repetition
@@ -157,7 +165,10 @@ class _ProgramRunViewState extends ConsumerState<ProgramRunView> {
                                                       .currentExercise
                                                       .repetition!
                                                       .toString()
-                                                : data.remainingSecs.toString(),
+                                                : formatSecs(
+                                                    data.remainingSecs,
+                                                  ),
+                                            // data.remainingSecs.toString()
                                           ),
                                         ],
                                       ),

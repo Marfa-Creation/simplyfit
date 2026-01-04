@@ -64,8 +64,7 @@ class _EditProgramViewState extends State<EditProgramView> {
             child: Scaffold(
               appBar: AppBar(
                 toolbarHeight: 63,
-                actions: [
-                ],
+                actions: [],
                 title: Container(
                   decoration: const BoxDecoration(
                     border: Border(
@@ -87,7 +86,6 @@ class _EditProgramViewState extends State<EditProgramView> {
                         bool exists = false;
 
                         for (var element in programs.requireValue) {
-
                           if (element.name.trim() == value.trim() &&
                               element.id !=
                                   ref.read(selectedProgramProvider)!.id) {
@@ -138,7 +136,6 @@ class _EditProgramViewState extends State<EditProgramView> {
                                 exerciseProvider(widget.program.id!).notifier,
                               )
                               .onReorder(widget.program.id!, oldIdx, newIdx);
-
                         },
                         itemCount: data.length,
                         itemBuilder: (context, idx) {
@@ -197,19 +194,34 @@ class _EditProgramViewState extends State<EditProgramView> {
                                       ),
                                     );
                                   },
-                                );                               },
+                                );
+                              },
                               title: Text(exercise.name),
                               subtitle: Text(
-                                "Preparation: ${exercise.preparation} secs",
+                                "Preparation: ${formatSecs(exercise.preparation)}",
                               ),
                               trailing: exercise.repetition != null
-                                  ? Text(
-                                      style: TextStyle(fontSize: 18),
-                                      "${exercise.repetition!} reps",
+                                  ? SizedBox(
+                                      width: 50,
+                                      child: Row(
+                                        crossAxisAlignment: .center,
+                                        mainAxisAlignment: .end,
+                                        children: [
+                                          Icon(
+                                            size: 18,
+                                            Icons.close,
+                                            color: Color(0xfff7f7f7),
+                                          ),
+                                          Text(
+                                            style: TextStyle(fontSize: 18),
+                                            "${exercise.repetition!}",
+                                          ),
+                                        ],
+                                      ),
                                     )
                                   : Text(
                                       style: TextStyle(fontSize: 18),
-                                      "${exercise.duration} secs",
+                                      formatSecs(exercise.duration!),
                                     ),
                             ),
                           );

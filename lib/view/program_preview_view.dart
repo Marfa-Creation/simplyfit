@@ -1,3 +1,4 @@
+import 'package:custom_exercise/core.dart';
 import 'package:custom_exercise/model/exercise_model.dart';
 import 'package:custom_exercise/model/program_model.dart';
 import 'package:custom_exercise/provider/exercise_provider.dart';
@@ -8,16 +9,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ProgramPreviewView extends StatelessWidget {
-  const ProgramPreviewView ({super.key});
+  const ProgramPreviewView({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Consumer(
           builder: (context, ref, child) {
-            return Text(
-              ref.watch(selectedProgramProvider)?.name ?? "fhfkjsdhf",
-            );
+            return Text(ref.watch(selectedProgramProvider)!.name);
           },
         ),
         actions: [
@@ -63,16 +62,30 @@ class ProgramPreviewView extends StatelessWidget {
                             return ListTile(
                               title: Text(exercise.name),
                               subtitle: Text(
-                                "Preparation: ${exercise.preparation} secs",
+                                "Preparation: ${formatSecs(exercise.preparation)}",
                               ),
                               trailing: exercise.repetition != null
-                                  ? Text(
-                                      style: TextStyle(fontSize: 18),
-                                      "${exercise.repetition!} reps",
+                                  ? SizedBox(
+                                      width: 50,
+                                      child: Row(
+                                        crossAxisAlignment: .center,
+                                        mainAxisAlignment: .end,
+                                        children: [
+                                          Icon(
+                                            size: 18,
+                                            Icons.close,
+                                            color: Color(0xfff7f7f7),
+                                          ),
+                                          Text(
+                                            style: TextStyle(fontSize: 18),
+                                            "${exercise.repetition!}",
+                                          ),
+                                        ],
+                                      ),
                                     )
                                   : Text(
                                       style: TextStyle(fontSize: 18),
-                                      "${exercise.duration} secs",
+                                      formatSecs(exercise.duration!),
                                     ),
                             );
                           },
