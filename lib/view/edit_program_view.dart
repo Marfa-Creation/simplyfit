@@ -4,7 +4,7 @@ import 'package:custom_exercise/model/program_model.dart';
 import 'package:custom_exercise/provider/exercise_provider.dart';
 import 'package:custom_exercise/provider/program_provider.dart';
 import 'package:custom_exercise/provider/selected_program_provider.dart';
-import 'package:custom_exercise/view/add_exercise_view.dart';
+import 'package:custom_exercise/view/add_edit_exercise_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

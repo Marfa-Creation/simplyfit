@@ -1,10 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:custom_exercise/model/exercise_import_model.dart';
+import 'package:custom_exercise/model/program_import_model.dart';
 import 'package:custom_exercise/model/program_model.dart';
 import 'package:custom_exercise/provider/db_provider.dart';
 import 'package:custom_exercise/provider/exercise_provider.dart';
 import 'package:custom_exercise/provider/selected_program_provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
 
 final programProvider = AsyncNotifierProvider.autoDispose(ProgramNotifier.new);
 
@@ -17,7 +23,7 @@ class ProgramNotifier extends AsyncNotifier<List<ProgramModel>> {
     )).map((map) => ProgramModel.fromMap(map)).toList();
   }
 
-  void createProgram(ProgramModel program) async {
+  Future<int?> createProgram(ProgramModel program) async {
     final db = (await ref.read(dbProvider.future));
     final rowid = await db.insert("programs", program.toMap());
     final id =
@@ -28,7 +34,7 @@ class ProgramNotifier extends AsyncNotifier<List<ProgramModel>> {
             ))[0]["id"]
             as int;
 
-    if (!state.hasValue) return;
+    if (!state.hasValue) return null;
 
     final programs = List.of(state.requireValue);
 
@@ -39,6 +45,8 @@ class ProgramNotifier extends AsyncNotifier<List<ProgramModel>> {
     });
 
     state = AsyncValue.data(programs);
+
+    return id;
   }
 
   void deleteProgram(int id) async {
@@ -83,5 +91,51 @@ class ProgramNotifier extends AsyncNotifier<List<ProgramModel>> {
         .selectProgram(ProgramModel(id: id, name: newName));
 
     state = AsyncValue.data(programs);
+  }
+
+
+  Future<void> exportSelectedProgram() async {
+    final selectedProgramId = ref.read(selectedProgramProvider)!.id!;
+    final program = (await future)
+        .where((element) => element.id == selectedProgramId)
+        .toList()[0];
+
+    final exercises = (await ref.read(exerciseProvider(program.id!).future))
+        .map((e) {
+          return {
+            "preparation": e.preparation,
+            "exercise_order": e.exerciseOrder,
+            "repetition": e.repetition,
+            "duration": e.duration,
+            "name": e.name,
+          };
+        })
+        .toList();
+    final exported = {"name": program.name, "exercises": exercises};
+
+    final picker = await FilePicker.platform.getDirectoryPath();
+
+    if (picker == null) return;
+
+    if (picker == '/') return;
+
+    var suffix = "";
+
+    for (int i = 0; true; i++) {
+      final path = join(picker, "${program.name}$suffix.json");
+      final file = File(path);
+      try {
+        await file.create(recursive: false, exclusive: true);
+
+        final jsonString = jsonEncode(exported);
+
+        file.writeAsString(jsonString);
+
+        break;
+      } on PathExistsException {
+        suffix = "-$i";
+        continue;
+      }
+    }
   }
 }
