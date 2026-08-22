@@ -187,7 +187,7 @@ class _EditProgramViewState extends State<EditProgramView> {
                                                       widget.program.id!,
                                                     ).notifier,
                                                   )
-                                                  .deleteExercise(exercise.id!);
+                                                  .deleteExercise(widget.program.id!, exercise.id!);
                                             },
                                           ),
                                         ],

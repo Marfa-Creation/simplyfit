@@ -121,7 +121,6 @@ class ExerciseNotifier extends AsyncNotifier<List<ExerciseModel>> {
     final db = await ref.read(dbProvider.future);
 
     await db.transaction((txn) async {
-
       for (final exercise in exercises) {
         final exerciseModel = ExerciseModel(
           id: null,
@@ -183,15 +182,27 @@ class ExerciseNotifier extends AsyncNotifier<List<ExerciseModel>> {
       where: "program_id = ?",
       whereArgs: [programId],
     );
-
     state = AsyncValue.data([]);
   }
 
-  void deleteExercise(int id) async {
+  void deleteExercise(int programId, int id) async {
     final db = await ref.read(dbProvider.future);
 
-    await db.delete("exercises", where: "id = ?", whereArgs: [id]);
-
+    await db.transaction((txn) async {
+      final deletedExerciseOrder = (await txn.query(
+        "exercises",
+        where: "id = ?",
+        whereArgs: [id],
+      )).first["exercise_order"] as int;
+      await txn.rawQuery(
+        "DELETE FROM exercises WHERE id = ?",
+        [id],
+      );
+      await txn.rawUpdate(
+        "UPDATE exercises SET exercise_order = exercise_order - 1 WHERE exercise_order > ? AND program_id = ?",
+        [deletedExerciseOrder, programId],
+      );
+    });
     if (!state.hasValue) return;
 
     var exercises = List.of(state.requireValue);
